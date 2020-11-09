@@ -1,0 +1,15 @@
+name: gbif
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - matplotlib
+  - python=3.8
+  - pandas
+  - numpy
+  - scipy
+  - pywin32
+  - mplleaflet
+  - pyproj
+  - geopandas
+prefix: C:\Users\Hannah\Anaconda3\envs\gbif
