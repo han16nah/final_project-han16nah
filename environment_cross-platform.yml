@@ -15,4 +15,5 @@ dependencies:
   - requests
   - fiona
   - geojson
+  - pytest
 prefix: C:\Users\Hannah\Anaconda3\envs\gbif
