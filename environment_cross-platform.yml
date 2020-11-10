@@ -12,4 +12,7 @@ dependencies:
   - mplleaflet
   - pyproj
   - geopandas
+  - requests
+  - fiona
+  - geojson
 prefix: C:\Users\Hannah\Anaconda3\envs\gbif
