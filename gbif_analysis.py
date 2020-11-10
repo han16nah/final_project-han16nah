@@ -159,7 +159,7 @@ def build_cooccurrence_matrix(df):
         (Co-occurrence matrix, Co-occurrence matrix with diagonals filled with 0)
     """
     # reclassify: values > 0 --> 1; NaN --> 0
-    df.values[df.values > 0] = 1
+    df = df.where(~(df.values > 0), other=1)
     df = df.fillna(0)
     df_asint = df.astype(int)
     df_cooc = df_asint.T.dot(df_asint)
@@ -170,7 +170,9 @@ def build_cooccurrence_matrix(df):
 
 
 # input data is read from config-file
-config_file = sys.argv[1]
+config_file = "config.json"
+# uncomment following line to provide configuration file in command line
+# config_file = sys.argv[1]
 with open(config_file) as src:
     config = json.load(src)
 try:
