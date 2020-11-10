@@ -1,11 +1,11 @@
 # final_project-han16nah
 
-This is the final project for submission in the **advances geoscripting** university course.
+This is the final project for submission in the **advanced geoscripting** university course.
 
 ## Goal of the assignment
 
 - To practice applying best-practices in scientific programmingn
-- To reflect on your programming habits and improve them.
+- To reflect on programming habits and improve them.
 
 ## Type of analysis
 
@@ -16,7 +16,7 @@ I split the project in two parts.
 1) An **exploratory data analysis using Jupyter Notebook**, where I experimented and explored the API, some visualisations and small analysis.
 
 
-2) A python script with the key analyses and functions from the notebook. Here, I tried to focus on programming style, readability and clear documentation of the code. Input can be given in configuration files (`-json`-format). I furthermore included some tests and tried to catch errors, which I stumbled upon.
+2) A python script with the key analyses and functions from the notebook. I included requests of another API here (Eurostat GISCO API). In the python code, I tried to focus on programming style, readability and documentation of the code. Input can be given in configuration files (`-json`-format). I furthermore tried to avoid or catch some errors which I stumbled upon.
 
 ## Requirements
 
@@ -32,6 +32,8 @@ To run the jupyter notebook and the python code, you need `python 3.8` and a num
 - mplleaflet
 - pywin32
 - pyproj
+- geojson
+- requests
 
 If using Anaconda, the environment can be set up using the `environment.yml`:
 
@@ -47,4 +49,7 @@ To run the Jupyter Notebook, simply open a command prompt in the forked reposito
 
 ### Python code
 
-... 
+To run the python code with the sample data, open a command prompt (Anaconda prompt) in the forked repository and then run 
+
+    python gbif_analysis.py config.json
+    
