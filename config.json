@@ -1,0 +1,20 @@
+{
+  "output_dir": "./output",
+  "species_list": [
+    "Sphex funerarius",
+    "Bicolorana bicolor",
+    "Conocephalus fuscus",
+    "Conocephalus dorsalis",
+    "Decticus verrucivorus",
+    "Gryllus campestris",
+    "Meconema meridionale",
+    "Meconema thalassinum",
+    "Metrioptera roeselii",
+    "Phaneroptera nana",
+    "Phaneroptera falcata",
+    "Platycleis albopuntata",
+    "Tesselana tesselata",
+    "Tettigonia viridissima"
+  ],
+  "country_code": "DE"
+}
