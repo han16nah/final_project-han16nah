@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+# =============================================================================
+# Course      : Advanced Geoscripting 2020
+# Date        : 2020/11/10
+# Name        : Hannah Weiser
+# e-mail      : h.weiser@stud.uni-heidelberg.de
+# =============================================================================
 """
-description
+This script performs an ecological data analysis of species occurrence. The steps are the following:
+- retrieving data from the Eurostat GISCO API and the GBIF API and converting it to GeoDataFrames
+- plotting point observations coloured by the year of observations
+- counting the number of point observations in administrative units and plotting choropleth maps
+- deriving a co-occurrence matrix and plotting the co-occurrence of one species (e.g. a predator) to several other
+species (e.g. preys)
 """
-
-__author__: "Hannah Weiser"
-__email__: "h.weiser@stud.uni-heidelberg.de"
-__date__: "11/2020"
-
+# =============================================================================
+# Imports
+# =============================================================================
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -20,12 +28,10 @@ import os
 import requests
 import json
 import geojson
-
-
 plt.style.use('seaborn')  # figure style
 
 
-def get_nuts(spatialtype='RG', resolution='10M', year='2021', projection='4326', subset='LEVL_3', output_file = "NUTS"):
+def get_nuts(spatialtype='RG', resolution='10M', year='2021', projection='4326', subset='LEVL_3', output_file="NUTS"):
     """
     Downloads NUTS data (statistical administrative data) of europe.
     For parameters, see also: https://gisco-services.ec.europa.eu/distribution/v2/nuts/nuts-2021-files.html
@@ -55,8 +61,8 @@ def get_nuts(spatialtype='RG', resolution='10M', year='2021', projection='4326',
     :return: GeoDataFrame of downloaded NUTS data
     """
     theme = 'NUTS'
-    format = 'geojson'
-    file = "%s_%s_%s_%s_%s_%s.%s" % (theme, spatialtype, resolution, year, projection, subset, format)
+    file_format = 'geojson'
+    file = "%s_%s_%s_%s_%s_%s.%s" % (theme, spatialtype, resolution, year, projection, subset, file_format)
     response = requests.get("https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/" + file)
     filename, ext = os.path.splitext(output_file)
     if ext == "":
@@ -71,24 +77,25 @@ def get_nuts(spatialtype='RG', resolution='10M', year='2021', projection='4326',
     return gdf
 
 
-def occs_to_gdf(occurence_dict):
+def occs_to_gdf(occurrence_dict):
     """
-    Converts an occurence dictionary to a geopandas GeoDataFrame and projects it to WGS84 (crs of occurences in GBIF).
-    :param occurence_dict: occurence dictionary as returned by the GBIF API (occurence section)
-    :return: Occurence GeoDataFrame
+    Converts an occurrence dictionary to a geopandas GeoDataFrame and projects it to WGS84 (crs of occurrences in GBIF).
+    :param occurrence_dict: occurrence dictionary as returned by the GBIF API (occurrence section)
+    :return: occurrence GeoDataFrame
     """
-    occ_df = pd.DataFrame.from_dict(occurence_dict['results'])
+    occ_df = pd.DataFrame.from_dict(occurrence_dict['results'])
     occ_df = occ_df.dropna(subset=['decimalLatitude', 'decimalLongitude'])
-    occ_df = occ_df.astype({'year':'int'})
-    occ_gdf = gpd.GeoDataFrame(occ_df, geometry=gpd.points_from_xy(occ_df.decimalLongitude, occ_df.decimalLatitude))
-    occ_gdf.set_crs('EPSG:4326', inplace=True)
+    occ_df = occ_df.astype({'year': 'int'})
+    occurrence_gdf = gpd.GeoDataFrame(occ_df,
+                                      geometry=gpd.points_from_xy(occ_df.decimalLongitude, occ_df.decimalLatitude))
+    occurrence_gdf.set_crs('EPSG:4326', inplace=True)
 
-    return occ_gdf
+    return occurrence_gdf
 
 
-def clip_gdf(gdf, clip_feat, crs = None):
+def clip_gdf(gdf, clip_feat, crs=None):
     """
-    Clips a dataframe by a clip feature and makes sure they are both in the same crs.
+    Clips a DataFrame by a clip feature and makes sure they are both in the same crs.
     :param gdf: Input GeoDataFrame to clip.
     :param clip_feat: Clip feature (GeoDataFrame or GeoSeries)
     :param crs: Coordinate reference system to project the input data to, in the form "EPSG:4326"
@@ -97,7 +104,7 @@ def clip_gdf(gdf, clip_feat, crs = None):
     """
     # Catch the error if one of the input DataFrames has no coordinate reference system
     try:
-        if crs == None:
+        if crs is None:
             crs = gdf.crs
             clip_feat.to_crs(crs, inplace=True)
         else:
@@ -142,18 +149,18 @@ def sjoin_and_merge(polys, points, pivot_index, count_column):
     return polys_new
 
 
-def build_cooccurence_matrix(df):
+def build_cooccurrence_matrix(df):
     """
-    Reclassifies the values in a dataframe and then builds  a co-occurence matrix.
+    Reclassifies the values in a dataframe and then builds  a co-occurrence matrix.
     Values > 0      are reclassified to     1
     NaN-values      are reclassified to     0
-    :param df: DataFrame to build the co-occurence matrix for
+    :param df: DataFrame to build the co-occurrence matrix for
     :return: Tuple:
-        (Co-occurence matrix, Co-occurence matrix with diagonals filled with 0)
+        (Co-occurrence matrix, Co-occurrence matrix with diagonals filled with 0)
     """
     # reclassify: values > 0 --> 1; NaN --> 0
     df.values[df.values > 0] = 1
-    df.fillna(0, inplace=True)
+    df = df.fillna(0)
     df_asint = df.astype(int)
     df_cooc = df_asint.T.dot(df_asint)
     df_cooc_f = df_cooc.copy()
@@ -161,37 +168,47 @@ def build_cooccurence_matrix(df):
 
     return df_cooc, df_cooc_f
 
-# input data
+
+# input data is read from config-file
 config_file = sys.argv[1]
 with open(config_file) as src:
     config = json.load(src)
 
 species_list = config["species_list"]
-out_dir = config["output_dir"]
 try:
     country_code = config["country_code"]
-except:
+except KeyError:
     country_code = None
-
+    print("Key not found. 'country_code' was set to None.")
+out_dir = config["output_dir"]
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
-gdf_aoi_adm = get_nuts()
-if country_code != None:
+# Download NUTS data from Eurostat GISCO API and save to gdf; we use EPSG=3035 because we want an equal-area projection
+gdf_aoi_adm = get_nuts(projection="3035")
+# if a country_code is provided, extract the subset from only this country
+if country_code is not None:
     gdf_aoi_adm = gdf_aoi_adm[gdf_aoi_adm['CNTR_CODE'] == country_code]
 gdf_aoi_occs = gdf_aoi_adm.copy()
 
+# get the species keys for the provided species using the species module of the GBIF API
 species_keys = [species.name_backbone(x)['usageKey'] for x in species_list]
 
+# iterate over each species, download the data from the GBIF API, write to csv, convert to GeoDataFrame and plot
+# the occurrence coloured by the year of observation.
+# Finally, add the observation count of each species in each administrative unit to the NUTS GeoDataFrame
+# in new columns named after the taxon key
 i = 0
 for sp in species_list:
     occ_dict = occ.search(scientificName=sp, country=country_code)
-    if occ_dict['results'] == []:
+    if not occ_dict['results']:
         continue
     occ_gdf = occs_to_gdf(occ_dict)
+    # project to the same crs as exported NUTS data ('EPSG:3035')
+    occ_gdf.to_crs(epsg=3035, inplace=True)
 
     occ_gdf.to_csv("gbif_occ_" + occ_dict['results'][0]['scientificName'].replace(" ", "_") + ".csv")
-    fig, ax = plt.subplots(figsize=(10,10))
+    fig, ax = plt.subplots(figsize=(10, 10))
     gdf_aoi_adm.plot(ax=ax, color='lightgrey')
     gdf_aoi_adm.geometry.boundary.plot(ax=ax, alpha=0.25, color='black', lw=0.5)
     occ_gdf.plot(column="year", ax=ax, cmap="OrRd", legend=True, categorical=True)
@@ -200,10 +217,12 @@ for sp in species_list:
     plt.clf()
     gdf_aoi_occs = sjoin_and_merge(gdf_aoi_occs, occ_gdf, 'NUTS_ID', 'taxonKey')
 
+
+# Plot choropleth maps showing the number of observations in each administrative unit
 n_plots = len([key for key in species_keys if key in gdf_aoi_occs.columns])
 n_cols = 4
 n_rows = int(np.ceil(n_plots/n_cols))
-fig, axs = plt.subplots(n_rows,n_cols, figsize=(20,15))
+fig, axs = plt.subplots(n_rows, n_cols, figsize=(20, 15))
 i = 0
 for sp in species_list:
     col = species_keys[species_list.index(sp)]
@@ -219,22 +238,26 @@ for sp in species_list:
 plt.savefig(os.path.join(out_dir, "choropleth.png"))
 plt.clf()
 
+# Build a co-occurrence matrix of all species
 keys = ['NUTS_ID'] + species_keys
 keys = [key for key in keys if key in gdf_aoi_occs.columns]
 df_aoi_occs_sub = gdf_aoi_occs[keys]
 df_aoi_occs_sub.set_index('NUTS_ID', inplace=True)
-df_aoi_cooc, df_aoi_cooc_f = build_cooccurence_matrix(df_aoi_occs_sub)
+df_aoi_cooc, df_aoi_cooc_f = build_cooccurrence_matrix(df_aoi_occs_sub)
 
+# Replace taxon keys by species name in the co-occurrence matrix
 reclass_dict = dict(zip(species_keys, species_list))
 df_aoi_cooc_f = df_aoi_cooc_f.rename(reclass_dict, axis='index').rename(reclass_dict, axis='columns')
 
-fig, axs = plt.subplots(1,1, figsize=(8,6))
+# plot the percentage of co-occurrence of the first species in the species list to all other species in the species list
+fig, axs = plt.subplots(1, 1, figsize=(8, 6))
 n_counties_occ = df_aoi_cooc.loc[species_keys[0], species_keys[0]]
 coocs = df_aoi_cooc_f[species_list[0]].sort_values(ascending=False)
+# divide by total counties, in which target species is observed to get relative values
 coocs = coocs/n_counties_occ * 100
 coocs.drop(species_list[0]).plot(kind='bar')
 plt.ylim(0, 100)
-plt.ylabel("Percentage of co-occurence with %s" % species_list[0])
+plt.ylabel("Percentage of co-occurrence with %s" % species_list[0])
 plt.xticks(rotation=45)
 plt.title(species_list[0])
-plt.savefig(os.path.join(out_dir, species_list[0].replace(" ", "_") + "_co-occurence.png"), bbox_inches='tight')
+plt.savefig(os.path.join(out_dir, species_list[0].replace(" ", "_") + "_co-occurrence.png"), bbox_inches='tight')
