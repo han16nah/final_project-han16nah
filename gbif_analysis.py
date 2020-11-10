@@ -173,14 +173,21 @@ def build_cooccurrence_matrix(df):
 config_file = sys.argv[1]
 with open(config_file) as src:
     config = json.load(src)
-
-species_list = config["species_list"]
+try:
+    species_list = config["species_list"]
+except KeyError:
+    print("No species list provided. Aborting.")
+    sys.exit()
 try:
     country_code = config["country_code"]
 except KeyError:
     country_code = None
     print("Key not found. 'country_code' was set to None.")
-out_dir = config["output_dir"]
+try:
+    out_dir = config["output_dir"]
+except KeyError:
+    out_dir = './output'
+    print("Key not found. 'output_dir' was set to './output'.")
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
