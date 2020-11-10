@@ -35,6 +35,7 @@ def test_cooccurrence_matrix():
     pd.testing.assert_frame_equal(cooc_m, expected_cooc_m, check_dtype=False)
     pd.testing.assert_frame_equal(cooc_m_f, expected_cooc_m_f, check_dtype=False)
 
+
 def test_cooccurrence_matrix_with_nulls():
     """
     Tests build_cooccurrence_matrix() with a DataFrame containing integers and NaN-values.
