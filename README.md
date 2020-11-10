@@ -34,6 +34,7 @@ To run the jupyter notebook and the python code, you need `python 3.8` and a num
 - pyproj
 - geojson
 - requests
+- pytest
 
 If using Anaconda, the environment can be set up using the `environment.yml`:
 
@@ -51,8 +52,9 @@ To run the Jupyter Notebook, simply open a command prompt in the forked reposito
 
 To run the python code with the sample data, open a command prompt (Anaconda prompt) in the forked repository and then run 
 
-    python gbif_analysis.py config.json
+    python gbif_analysis.py
     
+It is using the configurations given in config.json. Alternatively, uncomment line 175 to provide your own configuration file via the command prompt. 
 The following parameters can be provided in the configuration file:
 - `"species_list"`: List of species for which to conduct the analysis. Note that the first species is considered the target species for which to investigate co-occurence with the other species.
 - `"country_code"`: Country code to limit the analysis to a specific country only, e.g. 'DE' for Germany
