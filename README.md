@@ -54,7 +54,7 @@ To run the python code with the sample data, open a command prompt (Anaconda pro
 
     python gbif_analysis.py
     
-It is using the configurations given in config.json. Alternatively, uncomment line 175 to provide your own configuration file via the command prompt. 
+It is using the configurations given in config.json. Alternatively, uncomment line 181 to provide your own configuration file via the command prompt. 
 The following parameters can be provided in the configuration file:
 - `"species_list"`: List of species for which to conduct the analysis. Note that the first species is considered the target species for which to investigate co-occurence with the other species.
 - `"country_code"`: Country code to limit the analysis to a specific country only, e.g. 'DE' for Germany
