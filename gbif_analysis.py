@@ -13,6 +13,11 @@ This script performs an ecological data analysis of species occurrence. The step
 - counting the number of point observations in administrative units and plotting choropleth maps
 - deriving a co-occurrence matrix and plotting the co-occurrence of one species (e.g. a predator) to several other
 species (e.g. preys)
+
+usage: python gbif_analysis.py
+
+or uncomment line 181 and do:
+python gbif_analysis.py <config.json>
 """
 # =============================================================================
 # Imports
@@ -169,6 +174,7 @@ def build_cooccurrence_matrix(df):
     return df_cooc, df_cooc_f
 
 
+print("Getting inputs from config file ...")
 # input data is read from config-file
 config_file = "config.json"
 # uncomment following line to provide configuration file in command line
@@ -193,6 +199,7 @@ except KeyError:
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
+print("Downloading NUTS data ...")
 # Download NUTS data from Eurostat GISCO API and save to gdf; we use EPSG=3035 because we want an equal-area projection
 gdf_aoi_adm = get_nuts(projection="3035")
 # if a country_code is provided, extract the subset from only this country
@@ -200,6 +207,7 @@ if country_code is not None:
     gdf_aoi_adm = gdf_aoi_adm[gdf_aoi_adm['CNTR_CODE'] == country_code]
 gdf_aoi_occs = gdf_aoi_adm.copy()
 
+print("Getting species keys ...")
 # get the species keys for the provided species using the species module of the GBIF API
 species_keys = [species.name_backbone(x)['usageKey'] for x in species_list]
 
@@ -207,8 +215,8 @@ species_keys = [species.name_backbone(x)['usageKey'] for x in species_list]
 # the occurrence coloured by the year of observation.
 # Finally, add the observation count of each species in each administrative unit to the NUTS GeoDataFrame
 # in new columns named after the taxon key
-i = 0
-for sp in species_list:
+for i, sp in enumerate(species_list):
+    print("Processing species nr. %s ..." % (i+1))
     occ_dict = occ.search(scientificName=sp, country=country_code)
     if not occ_dict['results']:
         continue
@@ -225,9 +233,10 @@ for sp in species_list:
     plt.title("%s - Observations by year" % sp)
     plt.savefig(os.path.join(out_dir, sp + "_occ_by_year.png"))
     plt.clf()
+    print("Saved figure to " + os.path.join(out_dir, sp + "_occ_by_year.png"))
     gdf_aoi_occs = sjoin_and_merge(gdf_aoi_occs, occ_gdf, 'NUTS_ID', 'taxonKey')
 
-
+print("Plotting choropleth map ...")
 # Plot choropleth maps showing the number of observations in each administrative unit
 n_plots = len([key for key in species_keys if key in gdf_aoi_occs.columns])
 n_cols = 4
@@ -246,6 +255,7 @@ for sp in species_list:
     ax.title.set_text(sp)
     i += 1
 plt.savefig(os.path.join(out_dir, "choropleth.png"))
+print("Saved figure to " + os.path.join(out_dir, "choropleth.png"))
 plt.clf()
 
 # Build a co-occurrence matrix of all species
@@ -255,6 +265,7 @@ df_aoi_occs_sub = gdf_aoi_occs[keys]
 df_aoi_occs_sub.set_index('NUTS_ID', inplace=True)
 df_aoi_cooc, df_aoi_cooc_f = build_cooccurrence_matrix(df_aoi_occs_sub)
 
+print("Computing co-occurence ...")
 # Replace taxon keys by species name in the co-occurrence matrix
 reclass_dict = dict(zip(species_keys, species_list))
 df_aoi_cooc_f = df_aoi_cooc_f.rename(reclass_dict, axis='index').rename(reclass_dict, axis='columns')
@@ -271,3 +282,4 @@ plt.ylabel("Percentage of co-occurrence with %s" % species_list[0])
 plt.xticks(rotation=45)
 plt.title(species_list[0])
 plt.savefig(os.path.join(out_dir, species_list[0].replace(" ", "_") + "_co-occurrence.png"), bbox_inches='tight')
+print("Saved figure to " + os.path.join(out_dir, species_list[0].replace(" ", "_") + "_co-occurrence.png"))
