@@ -1,6 +1,6 @@
 # final_project-han16nah
 
-This is the final project for submission in the **advanced geoscripting** university course.
+This is my final project for submission in the **advanced geoscripting** university course.
 
 ## Goal of the assignment
 
