@@ -207,7 +207,8 @@ for sp in species_list:
     # project to the same crs as exported NUTS data ('EPSG:3035')
     occ_gdf.to_crs(epsg=3035, inplace=True)
 
-    occ_gdf.to_csv("gbif_occ_" + occ_dict['results'][0]['scientificName'].replace(" ", "_") + ".csv")
+    occ_gdf.to_csv(os.path.join(out_dir, "gbif_occ_" + occ_dict['results'][0]['scientificName'].
+                                replace(" ", "_") + ".csv"))
     fig, ax = plt.subplots(figsize=(10, 10))
     gdf_aoi_adm.plot(ax=ax, color='lightgrey')
     gdf_aoi_adm.geometry.boundary.plot(ax=ax, alpha=0.25, color='black', lw=0.5)
